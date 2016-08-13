@@ -9,6 +9,8 @@ For documentation and more details see example and source code.
 - support multi-tables
 - automatically generate table model schema
 - build-in simple table view
+- build-in IP and DATE logging
+- customizable logging table fields
 - Object-Oriented design
 - examples
 
