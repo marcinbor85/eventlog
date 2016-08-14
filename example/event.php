@@ -25,7 +25,7 @@ THE SOFTWARE.
 */
 
 // import library
-require("eventlog.php");
+require("../src/eventlog.php");
 
 // define database "Event" table model
 class Event extends RowModel {

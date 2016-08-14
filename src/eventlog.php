@@ -82,7 +82,17 @@ class EventLogger {
     function insert($row) {
         $model = get_class($row);
         $this->check_table($model);
-        $query = "INSERT INTO ".$model::get_columns_schema()." VALUES ".$model::get_values_schema();
+        
+        $columns = $model." (";
+        $values = "(";
+        foreach (get_class_vars($model) as $key => $value) {
+            $columns .= $key.", ";
+            $values .= "?, ";
+        }
+        $columns = substr($columns, 0, -2).")";
+        $values = substr($values, 0, -2).")";
+        
+        $query = "INSERT INTO ".$columns." VALUES ".$values;
         $commit = $this->db->prepare($query);
         $i = 1;
         foreach (get_object_vars($row) as $key => $value) {
@@ -117,24 +127,6 @@ abstract class RowModel {
             if (is_int($value)) $ret .= $key." INTEGER, ";
             elseif (is_float($value)) $ret .= $key." REAL, ";
             else $ret .= $key." TEXT, ";
-        }
-        $ret = substr($ret, 0, -2).")";
-        return $ret;
-    }
-    static function get_columns_schema() {
-        $model = get_called_class();
-        $ret = $model." (";
-        foreach (get_class_vars($model) as $key => $value) {
-            $ret .= $key.", ";
-        }
-        $ret = substr($ret, 0, -2).")";
-        return $ret;
-    }
-    static function get_values_schema() {
-        $model = get_called_class();
-        $ret = "(";
-        foreach (get_class_vars($model) as $key => $value) {
-            $ret .= "?, ";
         }
         $ret = substr($ret, 0, -2).")";
         return $ret;
