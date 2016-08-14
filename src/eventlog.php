@@ -41,9 +41,11 @@ class EventLogger {
     private function check_table($model) {
         if (!$this->check_table_exist($model)) $this->create_table($model);
     }
-    function get_table($model) {
+    function get_table($model, $limit = NULL) {
         $this->check_table($model);
-        $res = $this->db->query("SELECT rowid, * FROM ".$model." ORDER BY date DESC LIMIT 100");
+        $lmt = "";
+        if (!empty($limit)) $lmt = " LIMIT ".$limit;
+        $res = $this->db->query("SELECT rowid, * FROM ".$model." ORDER BY date DESC".$lmt);
         $ret = array();
         while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
             array_push($ret, $model::build($row));
@@ -58,7 +60,7 @@ class EventLogger {
                 $this->show_table($model, array($row));
                 break;
             case "GET":
-                $rows = $this->get_table($model);
+                $rows = $this->get_table($model, 100);
                 $this->show_table($model, $rows);
                 break;
         }
@@ -66,12 +68,14 @@ class EventLogger {
     function show_table($model, $rows) {
         echo "<table border='1'>";
         echo "<tr>";
+        echo "<th>rowid</th>";
         foreach (get_class_vars($model) as $key => $value) {
             echo "<th>".$key."</th>";
         }
         echo "</tr>";
         foreach ($rows as $row) {
             echo "<tr>";
+            echo "<td>".$row->get_rowid()."</td>";
             foreach ($row as $key => $value) {
                 echo "<td>".$value."</td>";
             }
@@ -109,7 +113,11 @@ class EventLogger {
 abstract class RowModel {
     public $ip = "";
     public $date = "";
+    private $rowid = NULL;
     
+    function get_rowid() {
+        return $this->rowid;
+    }
     static function get_ip() {
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) $ip = $_SERVER['HTTP_CLIENT_IP'];
         elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
@@ -124,6 +132,7 @@ abstract class RowModel {
         $model = get_called_class();
         $ret = $model." (";
         foreach (get_class_vars($model) as $key => $value) {
+            if ($key == "rowid") continue;
             if (is_int($value)) $ret .= $key." INTEGER, ";
             elseif (is_float($value)) $ret .= $key." REAL, ";
             else $ret .= $key." TEXT, ";
